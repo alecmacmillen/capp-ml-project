@@ -1,0 +1,11 @@
+Data/Input/RCRA_ENFORCEMENTS.csv
+Data/Input/RCRA_EVALUATIONS.csv
+Data/Input/RCRA_FACILITIES.csv
+Data/Input/RCRA_NAICS.csv
+Data/Input/RCRA_VIOLATIONS.csv
+Data/Input/RCRA_VIOSNC_HISTORY.csv
+Data/Input/violsum.csv
+Data/Built/full_built_data.csv
+Data/Built/Backup/full_built_data.csv
+Data/Built/Backup/full_built_data.zip
+Data/Built/Backup/small_built_data.csv

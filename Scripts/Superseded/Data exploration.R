@@ -1,0 +1,16 @@
+setwd("C:/Users/Alec/Documents/Academics/First Year/Spring Quarter/CAPP 30254 - Machine Learning/Project/Data")
+
+library(tidyverse)
+library(dplyr)
+library(stargazer)
+library(haven)
+library(broom)
+library(scales)
+library(gtools)
+
+enforcements <- read_csv("RCRA_ENFORCEMENTS.csv")
+evaluations <- read_csv("RCRA_EVALUATIONS.csv")
+facilities <- read_csv("RCRA_FACILITIES.csv")
+naics <- read_csv("RCRA_NAICS.csv")
+violations <- read_csv("RCRA_VIOLATIONS.csv")
+viosnc_history <- read_csv("RCRA_VIOSNC_HISTORY.csv")
