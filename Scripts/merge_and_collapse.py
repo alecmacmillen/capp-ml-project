@@ -33,33 +33,28 @@ def read_and_convert_dates(file, old_datecols, new_datecols, dateformat='%m/%d/%
     return df
 
 
-def filter_viol_on_yearmonth(violations_df, yearmonth):
+def filter_viol_on_year(violations_df, year):
     '''
-    For a given year-month pair, calculate features for a facility as a "snapshot
+    For a given year, calculate features for a facility as a "snapshot
     in time", that is, only using information available in the violations dataset
-    *up until that year-month* (so no future information is used). For a given
-    year-month pair, calculate the total number of previous violations, date of
+    *up until that year* (so no future information is used). For a given
+    year pair, calculate the total number of previous violations, date of
     most recent violation, most common violation type, and average time to resolve.
     Then merge summary statistics together on facility ID and return as a dataframe.
 
     Inputs:
       violations_df (pandas dataframe): information on violations
-      yearmonth (period type of 'M'): yearmonth to filter on (all information BEFORE
-        this yearmonth is captured)
+      year (period type of 'Y'): yearmonth to filter on (all information BEFORE
+        this year is captured)
 
     Returns:
       final_frame (pandas dataframe): summary statistics by facility for the period
-        from the beginning of the data to the yrmonth specified
+        from the beginning of the data to the year specified
     '''
-
-    # Create a yearmonth column using the violation date field
-    #violations_df.loc[:,'yearmonth'] = pd.to_datetime(
-    #    violations_df['viol_date']).dt.to_period('M')
-
     # Filter the dataframe to include only observations before yrmonth
     # and create a 'time_to_resolve' variable based on the violation determined
     # and resolution date
-    outdf = violations_df[violations_df['yearmonth']<yearmonth]
+    outdf = violations_df[violations_df['year'] < year]
     gb_obj = outdf.groupby(['ID_NUMBER'])
     
     # Calculate total count of previous violations
@@ -81,47 +76,37 @@ def filter_viol_on_yearmonth(violations_df, yearmonth):
     final_frame = reduce(lambda left, right: pd.merge(left, right, on=['ID_NUMBER'],
         how='inner'), df_list)
 
-    # Produce date field on which to merge violations with evaluations
-    if len(final_frame) > 0:
-        final_frame.loc[:,'analysis_yearmonth'] = yearmonth
+    final_frame.loc[:, 'year'] = year
+
     return final_frame
 
 
-def yearmonthly_viol_info(violations_df):
+def yearly_viol_info(violations_df, startyear, endyear):
     '''
-    Wrapper function for filter_viol_on_yearmonth. Takes cleaned violations dataframe
+    Wrapper function for filter_viol_on_year Takes cleaned violations dataframe
     and produces stacked dataframe of all information on previous violations by facility
-    and year-month from 1984 to 2018.
+    and year from 1984 to 2018.
 
     Inputs:
       violations_df (pandas dataframe): cleaned violations dataframe
 
     Returns:
-      yearmonthly_summary (pandas dataframe): past violations summary by facility and
-        date in year-month format.
+      yearly_summary (pandas dataframe): past violations summary by facility and
+        date in year format.
     '''
-    # Create list of yearmonth periods over which to iterate. Start in 1984, because
-    # that's the first year in which there is a non-trivial amount of data, and iterate
-    # through all year-months until December 2018
-    start = pd.to_datetime('1984-01-01')
-    rng = pd.date_range(start, periods=408, freq='1M')
-    period_list = []
-    for val in rng:
-        period_list.append(val.to_period('M'))
-
-    # Generate dataframe for each yearmonth with summary stats
+    # Generate dataframe for each year with summary stats
+    yearlist = list(range(startyear, endyear+1))
     dfs_dict = {}
     i = 1
     print("Producing violations summary")
-    for yearmonth in period_list:
-        if i % 50 == 0:
-            print("Progress: yearmonth ", i, " of ", len(period_list))
-        dfs_dict[yearmonth] = filter_viol_on_yearmonth(violations_df, yearmonth)
+    for year in yearlist:
+        print("Progress: year ", i, " of ", len(yearlist))
+        dfs_dict[year] = filter_viol_on_year(violations_df, year)
         i += 1
 
     # Concatenate all dfs and return
-    yearmonthly_summary = pd.concat(dfs_dict.values(), sort=True)
-    return yearmonthly_summary
+    yearly_summary = pd.concat(dfs_dict.values(), sort=True)
+    return yearly_summary
 
 
 
@@ -137,20 +122,16 @@ def filter_enf_on_year(enforcements_df, year):
 
     Inputs:
       enforcements_df (pandas dataframe): information on enforcements
-      yearmonth (period type of 'M'): yearmonth to filter on (all information BEFORE
-        this yearmonth is captured)
+      year (int): year to filter on (all information BEFORE
+        this year is captured)
 
     Returns:
       final_frame (pandas dataframe): summary statistics by facility for the period
         from the beginning of the data to the yrmonth specified
     '''
-    # Create a yearmonth column using the violation date field
-    #enforcements_df.loc[:,'yearmonth'] = pd.to_datetime(
-    #    enforcements_df['enf_date']).dt.to_period('M')
-
     # Filter the dataframe to include only observations before yrmonth
     # and create a groupby object to use to calculate summary stats
-    outdf = enforcements_df[enforcements_df['year']<year]
+    outdf = enforcements_df[enforcements_df['year'] < year]
     gb_obj = outdf.groupby(['ID_NUMBER'])
 
     # Calculate counts, date of most recent, and count/amount of previous
@@ -168,49 +149,39 @@ def filter_enf_on_year(enforcements_df, year):
     scr_ct = get_counts(gb_obj, 'SCR_AMOUNT', 'scr_ct')
     scr_amt = get_sum(gb_obj, 'SCR_AMOUNT', 'scr_amt')
 
-    # Merge all together into a single df for the yearmonth
+    # Merge all together into a single df for the year
     df_list = [enf_prev, enf_recent, most_common_enf_type, most_common_enf_agency,
         pmp_ct, pmp_amt, fmp_ct, fmp_amt, fsc_ct, fsc_amt, scr_ct, scr_amt]
     final_frame = reduce(lambda left, right: pd.merge(left, right, on=['ID_NUMBER'],
         how='inner'), df_list)
 
-    # Create yearmonth column for merging
-    if len(final_frame) > 0:
-        final_frame.loc[:, 'analysis_year'] = year
+    final_frame.loc[:, 'year'] = year
 
     return final_frame
 
 
-def yearly_enf_info(enforcements_df):
+def yearly_enf_info(enforcements_df, startyear, endyear):
     '''
-    Wrapper function for filter_enf_on_yearmonth. Takes cleaned enforcements dataframe
+    Wrapper function for filter_enf_on_year. Takes cleaned enforcements dataframe
     and produces stacked dataframe of all information on previous enforcements on facility
-    and year-month from 1984 to 2018.
+    and year from 1984 to 2018.
 
     Inputs:
       enforcements_df (pandas dataframe): cleaned enforcements dataframe
 
     Returns:
-      yearmonthly_summary (pandas dataframe): past enforcements summary by facility and
-        date in year-month format.
+      yearly_summary (pandas dataframe): past enforcements summary by facility and
+        date in year format.
     '''
-    # Create list of yearmonth periods over which to iterate. Start in 1984, because
-    # that's the first year in which there is a non-trivial amount of data, and iterate
-    # through all year-months until December 2018
-    start = pd.to_datetime('1984-01-01')
-    rng = pd.date_range(start, periods=35, freq='1Y')
-    period_list = []
-    for val in rng:
-        period_list.append(val.year)
+    # Generate dataframe for each year with summary stats
+    yearlist = list(range(startyear, endyear+1))
 
-
-    # Generate dataframe for each yearmonth with summary stats
+    # Generate dataframe for each year with summary stats
     dfs_dict = {}
     i = 1
     print("Producing enforcements summary")
-    for year in period_list:
-        if i % 5 == 0:
-            print("Progress: year ", i, " of ", len(period_list))
+    for year in yearlist:
+        print("Progress: year ", i, " of ", len(yearlist))
         dfs_dict[year] = filter_enf_on_year(enforcements_df, year)
         i += 1
 
@@ -219,89 +190,82 @@ def yearly_enf_info(enforcements_df):
     return yearly_summary
 
 
-def filter_viosnc_on_yearmonth(viosnc_df, yearmonth):
+def filter_viosnc_on_year(viosnc_df, year):
     '''
-    For a given year-month pair, calculate features for a facility as a "snapshot
+    For a given year pair, calculate features for a facility as a "snapshot
     in time", that is, only using information available in the viosnc dataset
-    *up until that year-month* (so no future information is used). For a given
-    year-month pair, calculate the total number of previous flags of each type, date of
-    most recent flagg, and whether facility is currently under a flag of either type. 
+    *up until that year* (so no future information is used). For a given
+    year, calculate the total number of previous flags of each type, date of
+    most recent flag, and whether facility is currently under a flag of either type. 
     Then merge summary statistics together on facility ID and return as a dataframe.
 
     Inputs:
       viosnc_df (pandas dataframe): information on viosnc
-      yearmonth (period type of 'M'): yearmonth to filter on (all information BEFORE
-        this yearmonth is captured)
+      year (int): year to filter on (all information BEFORE
+        this year is captured)
 
     Returns:
       final_frame (pandas dataframe): summary statistics by facility for the period
         from the beginning of the data to the yrmonth specified
     '''
     # Calculate summary stats for "VIO" flag
-    outdf = viosnc_df[(viosnc_df['yearmonth']<yearmonth) & (viosnc_df['VIO_FLAG']=='Y')]
+    outdf = viosnc_df[(viosnc_df['year'] < year) & (viosnc_df['VIO_FLAG']=='Y')]
     gb_obj = outdf.groupby(['ID_NUMBER'])
     vio_prev = get_counts(gb_obj, 'VIO_FLAG', 'previous_vio_flags')
-    vio_recent = get_recent(gb_obj, 'yearmonth', 'most_recent_vio_flag')
+    vio_recent = get_recent(gb_obj, 'year', 'most_recent_vio_flag')
 
     # Calculate summary stats for "SNC" flag
-    outdf2 = viosnc_df[(viosnc_df['yearmonth']<yearmonth) & (viosnc_df['SNC_FLAG']=='Y')]
+    outdf2 = viosnc_df[(viosnc_df['year'] < year) & (viosnc_df['SNC_FLAG']=='Y')]
     gb_obj2 = outdf2.groupby(['ID_NUMBER'])
     snc_prev = get_counts(gb_obj2, 'SNC_FLAG', 'previous_snc_flags')
-    snc_recent = get_recent(gb_obj2, 'yearmonth', 'most_recent_snc_flag')
+    snc_recent = get_recent(gb_obj2, 'year', 'most_recent_snc_flag')
 
     # Calculate whether the facility is currently under a flag as of current yearmonth
-    latest_idx = outdf.groupby(['ID_NUMBER'])['yearmonth'].transform(max) == outdf['yearmonth']
+    latest_idx = outdf.groupby(['ID_NUMBER'])['year'].transform(max) == outdf['year']
     currently_under = outdf[latest_idx]
     currently_under['current_vioflag'] = np.where(currently_under['VIO_FLAG'] == 'Y', 1, 0)
     currently_under['current_sncflag'] = np.where(currently_under['SNC_FLAG'] == 'Y', 1, 0)
     currently_under.drop(
-        columns=['ACTIVITY_LOCATION', 'YRMONTH', 'VIO_FLAG', 'SNC_FLAG', 'yearmonth']) 
+        columns=['ACTIVITY_LOCATION', 'YRMONTH', 'VIO_FLAG', 'SNC_FLAG', 'year']) 
 
     # Merge all into final frame
     df_list = [vio_prev, vio_recent, snc_prev, snc_recent, currently_under]
     final_frame = reduce(lambda left, right: pd.merge(left, right, on=['ID_NUMBER'],
         how='inner'), df_list)
-    if len(final_frame) > 0:
-        final_frame.loc[:, 'analysis_yearmonth'] = yearmonth
+
+    final_frame.loc[:, 'year'] = year
 
     return final_frame
 
 
-def yearmonthly_viosnc_info(viosnc_df):
+def yearly_viosnc_info(viosnc_df, startyear, endyear):
     '''
-    Wrapper function for filter_viosnc_on_yearmonth. Takes cleaned viosnc dataframe
+    Wrapper function for filter_viosnc_on_year. Takes cleaned viosnc dataframe
     and produces stacked dataframe of all information on previous viosnc on facility
-    and year-month from 1984 to 2018.
+    and year from 1984 to 2018.
 
     Inputs:
       viosnc_df (pandas dataframe): cleaned viosnc dataframe
 
     Returns:
-      yearmonthly_summary (pandas dataframe): past viosnc flags summary by facility and
-        date in year-month format.
+      yearly_summary (pandas dataframe): past viosnc flags summary by facility and
+        date in year format.
     '''
-    # Create list of yearmonth periods over which to iterate. Start in 1984, because
-    # that's the first year in which there is a non-trivial amount of data, and iterate
-    # through all year-months until December 2018
-    start = pd.to_datetime('1984-01-01')
-    rng = pd.date_range(start, periods=408, freq='1M')
-    period_list = []
-    for val in rng:
-        period_list.append(val.to_period('M'))
+    # Create list of years over which to iterate
+    yearlist = list(range(startyear, endyear+1))
 
     # Generate dataframe for each yearmonth with summary stats
     dfs_dict = {}
     i = 1
     print("Producing viosnc summaries")
-    for yearmonth in period_list:
-        if i % 50 == 0:
-            print("Progress: yearmonth ", i, " of ", len(period_list))
-        dfs_dict[yearmonth] = filter_viosnc_on_yearmonth(viosnc_df, yearmonth)
+    for year in yearlist:
+        print("Progress: year ", i, " of ", len(yearlist))
+        dfs_dict[year] = filter_viosnc_on_year(viosnc_df, year)
         i += 1
 
     # Concatenate all dfs and return
-    yearmonthly_summary = pd.concat(dfs_dict.values(), sort=True)
-    return yearmonthly_summary
+    yearly_summary = pd.concat(dfs_dict.values(), sort=True)
+    return yearly_summary
 
 
 def get_counts(gb_obj, oldcol, newcol):
@@ -420,8 +384,10 @@ def go(args):
     # to get by-facility information for each evaluation
     evaluations = read_and_convert_dates(args[1],
         ['EVALUATION_START_DATE'], ['eval_date'])
-    evaluations['analysis_yearmonth'] = evaluations['eval_date'].dt.to_period('M')
-    evaluations['analysis_year'] = evaluations['eval_date'].dt.year
+    evaluations['year'] = evaluations['eval_date'].dt.year
+    evaluations['plan_date'] = pd.to_datetime('01/01/' + evaluations['year'].astype(str),
+        format = '%m/%d/%Y')
+    evaluations
     facilities = pd.read_csv(args[2])
 
     # Some facilities have more than one classification, so we'll use the
@@ -440,17 +406,17 @@ def go(args):
     violations = read_and_convert_dates(args[4],
         ['DATE_VIOLATION_DETERMINED','ACTUAL_RTC_DATE','SCHEDULED_COMPLIANCE_DATE'], 
         ['viol_date','rtc_date','compliance_date'])
-    # Drop a few outlier observations that occur before 1980
-    violations = violations[violations['viol_date'] >= pd.to_datetime('01/01/1980')]
     # Create yearmonth variable for filtering
-    violations['yearmonth'] = pd.to_datetime(violations['viol_date'], format='%Y%m').dt.to_period('M')
+    violations['year'] = violations['viol_date'].dt.year
+    # Drop a few outlier observations that occur before 1980
+    violations = violations[violations['year'] >= 1980]
     # Calculate 'time_to_resolve' violation as difference between violation determined date
     # and actual compliance date
     violations.loc[:, 'time_to_resolve'] = (violations['rtc_date'] - violations['viol_date']).dt.days
     # Calculate by-monthly statistics on violations history
-    violations_summary = yearmonthly_viol_info(violations)
+    violations_summary = yearly_viol_info(violations, 1984, 2019)
     # Merge onto evaluations/facilities/industry dataset 
-    merged = merged.merge(violations_summary, on=['ID_NUMBER','analysis_yearmonth'], how='left')
+    merged = merged.merge(violations_summary, on=['ID_NUMBER','year'], how='left')
 
 
     # RCRA_VIOSNC_HISTORY: read in, clean, then get by-monthly summary statistics
@@ -459,12 +425,12 @@ def go(args):
         ['YRMONTH'], ['viosnc_date'], '%Y%m')
     # Drop a few outlier observations that occur before 1980 and convert the 'YRMONTH' 
     # variable to 'yearmonth' for summarizing
-    viosnc['yearmonth'] = pd.to_datetime(viosnc['YRMONTH'], format='%Y%m').dt.to_period('M')
-    viosnc = viosnc[viosnc['yearmonth'] >= pd.to_datetime('01/01/1980').to_period('M')]
+    viosnc['year'] = viosnc['viosnc_date'].dt.year
+    viosnc = viosnc[viosnc['year'] >= 1980]
     # Calculate by-monthly statistics on viosnc flag history
-    viosnc_summary = yearmonthly_viosnc_info(viosnc)
+    viosnc_summary = yearly_viosnc_info(viosnc, 1984, 2019)
     # Merge onto evaluations/faciltiies/industries/violations dataset
-    merged = merged.merge(viosnc_summary, on=['ID_NUMBER', 'analysis_yearmonth'], how='left')
+    merged = merged.merge(viosnc_summary, on=['ID_NUMBER', 'year'], how='left')
 
 
     # RCRA_ENFORCEMENTS: read in, clean, thhen get by-monthly summary statistics 
@@ -486,11 +452,10 @@ def go(args):
     type_mask = ~enforcements['type_category'].isin(['385','425','865'])
     enforcements['type_category'].loc[type_mask] = enforcements['type_category'].str.slice(0,2) + '0'
     # Calculate by-monthly statistics on enforcement history
-    enforcement_summary = yearly_enf_info(enforcements)
-    merged = merged.merge(enforcement_summary, on=['ID_NUMBER', 'analysis_year'], how='left')
+    enforcement_summary = yearly_enf_info(enforcements, 1984, 2019)
+    merged = merged.merge(enforcement_summary, on=['ID_NUMBER', 'year'], how='left')
 
     merged.to_csv(args[7], header=True, index=False)
-    return merged
 
 
 

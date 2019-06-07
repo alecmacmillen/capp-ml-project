@@ -7,7 +7,6 @@ import pandas as pd
 import merge_and_collapse as mc
 import generate_features as gf
 import pipeline as ppl
-#import model_specs_short as ms
 import model_specs as ms
 
 
@@ -42,7 +41,7 @@ def go(args):
         test_dates = train_test_dict[split]['test_dates'][0] + "-" + \
             train_test_dict[split]['test_dates'][1]
         
-        # Call model 'magic loop'
+        # Call model 'magic loop' from pipeline module
         split_summary = ppl.run_all_models(
             xtrain, ytrain, xtest, ytest, train_dates, test_dates, 'violation', ms.model_list, 'precision')
 

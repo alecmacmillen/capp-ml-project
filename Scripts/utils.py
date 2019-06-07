@@ -5,13 +5,13 @@ import numpy as np
 
 # Force 'most_common_enf_type' to be read in as string, not int
 INPUT_DTYPE = {'ID_NUMBER':str,'ACTIVITY_LOCATION_x':str,'EVALUATION_IDENTIFIER':str,
-    'EVALUATION_TYPE':str, 'EVALUATION_DESC':str, 'EVALUATION_AGENCY':str,
+    'plan_date':str, 'EVALUATION_TYPE':str, 'EVALUATION_DESC':str, 'EVALUATION_AGENCY':str,
     'EVALUATION_START_DATE':str, 'FOUND_VIOLATION':str, 'eval_date':str,
-    'analysis_yearmonth':str, 'prev_violations':float, 'most_recent_viol':str,
+    'year':str, 'prev_violations':float, 'most_recent_viol':str, 'FED_WASTE_GENERATOR':str,
     'most_common_type':str, 'avg_resolution_time':str, 'previous_vio_flags':float,
     'most_recent_vio_flag':str, 'previous_snc_flags':float, 'most_recent_snc_flag':str,
     'ACTIVITY_LOCATION_y':str, 'YRMONTH':str, 'VIO_FLAG':str, 'SNC_FLAG':str,
-    'viosnc_date':str, 'yearmonth':str, 'current_vioflag':float, 'curent_sncflag':float,
+    'viosnc_date':str, 'yearmonth':str, 'current_vioflag':float, 'current_sncflag':float,
     'FACILITY_NAME':str, 'ACTIVITY_LOCATION':str, 'FULL_ENFORCEMENT':str,
     'HREPORT_UNIVERSE_RECORD':str, 'STREET_ADDRESS':str, 'CITY_NAME':str,
     'STATE_CODE':str, 'ZIP_CODE':str, 'LATITUDE83':str, 'LONGITUDE83':str,

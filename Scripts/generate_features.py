@@ -193,7 +193,7 @@ def clean_and_split(infile, train_test_list, target):
             continue
 
     # Convert columns with date values to dates
-    datecols = ['eval_date', 'most_recent_viol', 'most_recent_enf']
+    datecols = ['plan_date', 'eval_date', 'most_recent_viol', 'most_recent_enf']
     yrmonthcols = []
     for col in datecols:
         df[col] = pd.to_datetime(df[col])
@@ -216,8 +216,9 @@ def clean_and_split(infile, train_test_list, target):
             test_end.strftime('%m/%d/%Y')
 
         # Split dataset into train and test for separate preparation
-        train = df[(df['eval_date']>=train_start) & (df['eval_date']<train_end)]
-        test = df[(df['eval_date']>=test_start) & (df['eval_date']<test_end)]
+        # Use the planning date (1/1 of each year) as the cutoff for train-test
+        train = df[(df['plan_date']>=train_start) & (df['plan_date']<train_end)]
+        test = df[(df['plan_date']>=test_start) & (df['plan_date']<test_end)]
 
         # Call prep_features function (see below)
         train_prepped = prep_features(train)
@@ -337,21 +338,23 @@ def prep_features(df):
     # Create indicator variables to determine whether a violation,
     # vio flag, snc flag, or enforcement ocurred/was applied to a facility
     # within a 6-, 12-, 18-, 24-, 60-, and 120-month period of time
-    # prior to a given evaluation.
+    # prior to a given evaluation. Important to note that this 'previous'
+    # information is calculated using the PLANNING date (1/1) as the 
+    # reference point rather than the EVALUATION date
     df = indicator_timeframe(
-        df, 'months_since_viol', 'viol', 'eval_date', 'most_recent_viol')
+        df, 'months_since_viol', 'viol', 'plan_date', 'most_recent_viol')
     df['most_recent_vio_flag'] = pd.to_datetime(
         df['most_recent_vio_flag'], format='%Y-%m', errors='coerce')
     df = indicator_timeframe(
-        df, 'months_since_vioflag', 'vioflag', 'eval_date', 'most_recent_vio_flag')
+        df, 'months_since_vioflag', 'vioflag', 'plan_date', 'most_recent_vio_flag')
     df['most_recent_snc_flag'] = pd.to_datetime(
         df['most_recent_snc_flag'], format='%Y-%m', errors='coerce')
     df = indicator_timeframe(
-        df, 'months_since_sncflag', 'sncflag', 'eval_date', 'most_recent_snc_flag')
+        df, 'months_since_sncflag', 'sncflag', 'plan_date', 'most_recent_snc_flag')
     df['most_recent_enf'] = pd.to_datetime(
         df['most_recent_enf'], errors='coerce')
     df = indicator_timeframe(
-        df, 'months_since_enf', 'enfflag', 'eval_date', 'most_recent_enf')
+        df, 'months_since_enf', 'enfflag', 'plan_date', 'most_recent_enf')
 
     # Scale numeric variables as enumerated in in SCALING_COLS global list
     for col in utils.SCALING_COLS:
@@ -365,7 +368,7 @@ def prep_features(df):
         'most_recent_viol', 'most_recent_snc_flag', 'most_recent_vio_flag', 
         'viosnc_date', 'most_recent_enf', 'months_since_viol',
         'months_since_vioflag', 'months_since_sncflag', 
-        'months_since_enf'], inplace=True)
+        'months_since_enf', 'plan_date'], inplace=True)
 
     return df
 

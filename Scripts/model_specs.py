@@ -1,9 +1,7 @@
 from sklearn import neighbors, linear_model, tree, svm, ensemble, naive_bayes
 import datetime
 
-train_test_splits = [(('01/01/1990','12/31/1994'),('01/01/1996','12/31/1996')),
-                     (('01/01/2000','12/31/2008'),('01/01/2009','12/31/2012'))]
-thresholds = [0.01, 0.02, 0.05, 0.1, 0.2, 0.3, 0.5]
+thresholds = [0.05, 0.1, 0.15]
 
 # KNN
 knn_dict = {'model': neighbors.KNeighborsClassifier(),
@@ -38,7 +36,7 @@ rf_dict = {'model': ensemble.RandomForestClassifier(),
            'name': 'Random forest',
            'params': {'n_estimators': [10, 50, 100],
                       'criterion': ['gini', 'entropy'],
-                      'max_depth': [1,2,3,5,10,None],
+                      'max_depth': [1,5,10,None],
                       'random_state': [100]}}               
 
 # Bagging
@@ -69,7 +67,11 @@ model_list = [lr_dict, dtree_dict, rf_dict]
 
 
 
-splits = [{'split_number': 0, 'train_start': datetime.datetime(2000, 1, 1, 0, 0), 
+splits = [{'split_number': 15, 'train_start': datetime.datetime(2000, 1, 1, 0, 0), 
+           'train_end': datetime.datetime(2016, 1, 1, 0, 0), 'test_start': datetime.datetime(2017, 1, 1, 0, 0), 
+           'test_end': datetime.datetime(2018, 1, 1, 0, 0)}]
+
+splits_ = [{'split_number': 0, 'train_start': datetime.datetime(2000, 1, 1, 0, 0), 
            'train_end': datetime.datetime(2001, 1, 1, 0, 0), 'test_start': datetime.datetime(2002, 1, 1, 0, 0), 
            'test_end': datetime.datetime(2003, 1, 1, 0, 0)}, 
            {'split_number': 1, 'train_start': datetime.datetime(2000, 1, 1, 0, 0), 
