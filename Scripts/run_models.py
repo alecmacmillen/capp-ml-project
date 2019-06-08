@@ -48,6 +48,7 @@ def go(args):
         # Write out model results to output sheet
         sheetname = 'split_' + str(split)
         split_summary.to_excel(writer, sheet_name=sheetname, header=True, index=False)
+        writer.save()
 
     writer.save()
 

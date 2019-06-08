@@ -589,8 +589,9 @@ def model_loop(
     baseline = (len(y_test) - sum(y_test)) / len(y_test)
 
     # Fit, train and add model statistics to summary for all parameter combos
+    i = 1
     for params in combinations:
-
+        print("\t Fitting model ", i, " of ", len(combinations), " in this category.")
         # Create and fit model, save parameter values to be appended to
         # summary dataset
         model = base.clone(model_dict['model'])
@@ -614,6 +615,7 @@ def model_loop(
             summary.loc[len(summary)] = [model_dict['name'], 
                 train_date, test_date, param_print, threshold, baseline,
                 accuracy, precision, recall, f1, auc]
+        i += 1
     return summary
 
 
