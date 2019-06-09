@@ -15,15 +15,14 @@ def go(args):
     Run all models using specifications and train-test splits 
     listed in model_specs_short
     '''
-    usage = ("usage: python3 run_models.py <infile.csv> <outfile.xlsx>")
-    if len(args) != 3:
+    usage = ("usage: python3 run_models.py <infile.csv>")
+    if len(args) != 2:
         print(usage)
         sys.exit(1)
 
 
     # Create dictionary of train-test sets and output Excel writer object
     train_test_dict = gf.clean_and_split(args[1], ms.splits, 'violation')
-    writer = pd.ExcelWriter(args[2], engine='xlsxwriter')
 
     # Iterate through all train-test sets
     for split in train_test_dict:
@@ -36,21 +35,16 @@ def go(args):
         xtest, ytest = train_test_dict[split]['xtest'], train_test_dict[split]['ytest']
 
         # Unpack train-test date strings
-        train_dates = train_test_dict[split]['train_dates'][0] + "-" + \
-            train_test_dict[split]['train_dates'][1]
-        test_dates = train_test_dict[split]['test_dates'][0] + "-" + \
-            train_test_dict[split]['test_dates'][1]
+        train_dates = train_test_dict[split]['train_dates']
+        test_dates = train_test_dict[split]['test_dates']
         
         # Call model 'magic loop' from pipeline module
         split_summary = ppl.run_all_models(
             xtrain, ytrain, xtest, ytest, train_dates, test_dates, 'violation', ms.model_list, 'precision')
 
         # Write out model results to output sheet
-        sheetname = 'split_' + str(split)
-        split_summary.to_excel(writer, sheet_name=sheetname, header=True, index=False)
-        writer.save()
-
-    writer.save()
+        outfile = '../Data/Results/split_' + str(split) + '_models.csv'
+        split_summary.to_csv(outfile, header=True, index=False)
 
 
 if __name__ == "__main__":
