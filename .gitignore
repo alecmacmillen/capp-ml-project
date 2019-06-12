@@ -9,3 +9,4 @@ Data/Built/full_built_data.csv
 Data/Built/Backup/full_built_data.csv
 Data/Built/Backup/full_built_data.zip
 Data/Built/Backup/small_built_data.csv
+Scripts/__pycache__
