@@ -1,8 +1,8 @@
 '''
-generate_features
+generate_features.py.
 
 Clean combined EPA RCRA data and generate features in preparation for
-using it to fit models in sklearn
+using it to fit models in sklearn.
 '''
 
 import sys

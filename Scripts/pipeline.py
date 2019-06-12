@@ -468,6 +468,24 @@ def get_pred_and_actual(xtest, ytest, target, pred_scores, threshold):
 def model_loop(
     X_train, y_train, X_test, y_test, train_date, test_date, target, model_dict):
     '''
+    Loop through all the models listed in the input model_dict using
+    all train-test splits specified in the model_specs module. Calculate
+    model metrics at all specified thresholds and output a summary CSV
+    including model metadata, parameters, and performance.
+
+    Inputs:
+      X_train (pd df): dataframe of feature training data
+      y_train (pd df): dataframe of target training data
+      X_test (pd df): dataframe of feature testing data
+      y_test (pd df): dataframe of target testing data
+      train_date (str): string indicating interval of training data
+      test_date (str): string indicating interval of testing data
+      target (str): name of target variable
+      model_dict (dict): dictionary of models including parameters,
+        train-test dates, and actual data
+
+    Returns:
+      Outputs summary CSV of model metadata, metrics, performance
     '''
     # Create dataframe shell that will be filled by model statistics
     summary = pd.DataFrame(columns=[
@@ -481,7 +499,7 @@ def model_loop(
     combinations = [dict(zip(keys, combination)) for combination in it.product(*values)]
 
     # Set baseline accuracy
-    baseline = (len(y_test) - sum(y_test)) / len(y_test)
+    baseline = 1 - (len(y_test) - sum(y_test)) / len(y_test)
 
     # Fit, train and add model statistics to summary for all parameter combos
     i = 1

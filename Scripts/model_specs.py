@@ -70,7 +70,7 @@ bayes_dict = {'model': naive_bayes.GaussianNB(),
               'params': {}}
 
 # List of all models
-model_list = [lr_dict, dtree_dict, rf_dict, bag_dict, gboost_dict, aboost_dict, bayes_dict]
+model_list = [knn_dict, lr_dict, dtree_dict, svm_dict, rf_dict, bag_dict, gboost_dict, aboost_dict, bayes_dict]
 
 splits = [{'split_number': 0, 'train_start': datetime.datetime(2000, 1, 1, 0, 0), 
            'train_end': datetime.datetime(2001, 1, 1, 0, 0), 'test_start': datetime.datetime(2002, 1, 1, 0, 0), 
